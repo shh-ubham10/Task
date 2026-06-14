@@ -339,3 +339,36 @@
   cursor: pointer;
 }
 .qp-next-btn:disabled { opacity: 0.7; }
+.qp-chip-csv { cursor: pointer; }
+
+.qp-tool-fmt { font-size: 13px; }
+
+.qp-img-preview {
+  position: relative;
+  padding: 10px 14px;
+  border-bottom: 1px solid #eaecf0;
+  display: inline-block;
+}
+
+.qp-img-preview img {
+  max-height: 120px;
+  max-width: 100%;
+  border-radius: 6px;
+  display: block;
+}
+
+.qp-img-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #eaecf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #f04438;
+}

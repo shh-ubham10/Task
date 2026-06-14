@@ -8,12 +8,12 @@ import "./Question.css";
 interface QForm {
   question: string; option1: string; option2: string;
   option3: string; option4: string; correct_option: string;
-  explanation: string; difficulty: string;
+  explanation: string; difficulty: string; image?: string;
 }
 
 const blank = (): QForm => ({
   question: "", option1: "", option2: "", option3: "", option4: "",
-  correct_option: "option1", explanation: "", difficulty: "easy",
+  correct_option: "option1", explanation: "", difficulty: "easy", image: "",
 });
 
 const ChevronDown = () => (
@@ -31,6 +31,65 @@ const Question = () => {
 
   const set = (k: keyof QForm, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  const applyFormat = (tag: string) => {
+    const textarea = document.getElementById("q-textarea") as HTMLTextAreaElement;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = form.question.substring(start, end);
+    if (!selected) return;
+    const tagMap: Record<string, [string, string]> = {
+      B: ["**", "**"], I: ["*", "*"], U: ["__", "__"], S: ["~~", "~~"],
+    };
+    const [open, close] = tagMap[tag] || ["", ""];
+    const newText = form.question.substring(0, start) + open + selected + close + form.question.substring(end);
+    set("question", newText);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => set("image", ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const lines = text.trim().split("\n").slice(1);
+      const parsed: QForm[] = lines.map((line) => {
+        const cols = line.split(",");
+        return {
+          question: cols[0]?.trim() || "",
+          option1: cols[1]?.trim() || "",
+          option2: cols[2]?.trim() || "",
+          option3: cols[3]?.trim() || "",
+          option4: cols[4]?.trim() || "",
+          correct_option: cols[5]?.trim() || "option1",
+          explanation: cols[6]?.trim() || "",
+          difficulty: cols[7]?.trim() || "easy",
+          image: "",
+        };
+      }).filter((q) => q.question);
+
+      if (!parsed.length) { alert("No valid questions found in CSV."); return; }
+
+      const updated = [...questions];
+      if (form.question.trim()) updated[current] = { ...form, type: "mcq" };
+      const merged = [...updated, ...parsed.map((q) => ({ ...q, type: "mcq" }))];
+      setQuestions(merged);
+      setForm(blank());
+      setCurrent(merged.length);
+      alert(`${parsed.length} question${parsed.length > 1 ? "s" : ""} imported successfully.`);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   const saveAndAdd = () => {
     if (!form.question.trim()) { alert("Question text is required."); return; }
     const updated = [...questions];
@@ -46,6 +105,10 @@ const Question = () => {
     setQuestions(updated);
     setForm(updated[idx] ? { ...(updated[idx] as QForm) } : blank());
     setCurrent(idx);
+  };
+
+  const deleteCurrentEdits = () => {
+    setForm(blank());
   };
 
   const handleSubmit = async () => {
@@ -123,9 +186,6 @@ const Question = () => {
               </div>
               <div className="qp-info-details">
                 <span><b>Subject</b> {testData.subject || "-"}</span>
-                <span className="qp-tag">Grammar</span>
-                <span className="qp-tag">Writing</span>
-                <span className="qp-tag qp-tag-pink">Application</span>
               </div>
             </div>
             <div className="qp-info-stats">
@@ -144,29 +204,70 @@ const Question = () => {
             <span className="qp-qnum-of">/{testData.total_questions || "?"}</span>
             <div className="qp-qnum-actions">
               <button className="qp-chip">+ MCQ</button>
-              <button className="qp-chip">+ CSV</button>
+              <label className="qp-chip qp-chip-csv">
+                + CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  style={{ display: "none" }}
+                  onChange={handleCSV}
+                />
+              </label>
             </div>
           </div>
 
           {/* delete row */}
           <div className="qp-delete-row">
-            <button className="qp-delete-btn">
+            <button className="qp-delete-btn" onClick={deleteCurrentEdits}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               Delete All Edits
             </button>
           </div>
 
-          {/* question textarea */}
+          {/* question editor */}
           <div className="qp-editor-box">
             <div className="qp-toolbar">
-              {["B","I","U","S"].map((t) => <button key={t} className="qp-tool">{t}</button>)}
+              {["B","I","U","S"].map((t) => (
+                <button key={t} className="qp-tool qp-tool-fmt" onClick={() => applyFormat(t)}
+                  style={{ fontWeight: t === "B" ? 700 : 400, fontStyle: t === "I" ? "italic" : "normal",
+                    textDecoration: t === "U" ? "underline" : t === "S" ? "line-through" : "none" }}>
+                  {t}
+                </button>
+              ))}
               <div className="qp-tool-sep"/>
-              {[
-                <svg key="link" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
-                <svg key="img" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
-              ].map((icon, i) => <button key={i} className="qp-tool">{icon}</button>)}
+              <button className="qp-tool" title="Bullet list">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+              </button>
+              <button className="qp-tool" title="Numbered list">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+              </button>
+              <button className="qp-tool" title="Link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+              <label className="qp-tool" title="Upload Image" style={{ cursor: "pointer" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload}/>
+              </label>
+              <div className="qp-tool-sep"/>
+              <button className="qp-tool" title="Align left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+              </button>
+              <button className="qp-tool" title="Align center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              </button>
             </div>
+
+            {form.image && (
+              <div className="qp-img-preview">
+                <img src={form.image} alt="question visual"/>
+                <button className="qp-img-remove" onClick={() => set("image", "")}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            )}
+
             <textarea
+              id="q-textarea"
               className="qp-textarea"
               placeholder="Type here"
               rows={5}
@@ -177,7 +278,7 @@ const Question = () => {
 
           {/* options */}
           <p className="qp-opts-label">Type the options below</p>
-          {(["option1","option2","option3","option4"] as const).map((opt) => (
+          {(["option1","option2","option3","option4"] as const).map((opt, i) => (
             <div key={opt} className="qp-opt-row">
               <label className="qp-opt-radio">
                 <input type="radio" name="correct" checked={form.correct_option === opt} onChange={() => set("correct_option", opt)}/>
@@ -185,11 +286,11 @@ const Question = () => {
               </label>
               <input
                 className="qp-opt-input"
-                placeholder="Type Option here"
+                placeholder={`Type Option here`}
                 value={form[opt]}
                 onChange={(e) => set(opt, e.target.value)}
               />
-              <button className="qp-opt-del">
+              <button className="qp-opt-del" onClick={() => set(opt, "")}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98a2b3" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
               </button>
             </div>
