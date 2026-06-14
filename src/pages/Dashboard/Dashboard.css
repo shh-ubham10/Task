@@ -1,0 +1,107 @@
+.dashboard-page {
+  width: 100%;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.dashboard-header p {
+  margin-top: 4px;
+  color: #667085;
+}
+
+.create-test-btn {
+  border: none;
+  background: #5b7cff;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dashboard-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.tests-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tests-table th {
+  text-align: left;
+  padding: 14px;
+  border-bottom: 1px solid #eaecf0;
+  color: #667085;
+}
+
+.tests-table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.draft {
+  background: #fff4e5;
+  color: #f79009;
+}
+
+.published {
+  background: #e8fff3;
+  color: #12b76a;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-buttons button {
+  border: 1px solid #d0d5dd;
+  background: white;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.loading-state {
+  padding: 40px;
+  text-align: center;
+  color: #667085;
+}
+
+.empty-state {
+  padding: 60px;
+  text-align: center;
+  color: #667085;
+}
+
+.empty-state button {
+  margin-top: 16px;
+  background: #5b7cff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.delete-action {
+  color: #d93025 !important;
+  border-color: #fecdca !important;
+}
