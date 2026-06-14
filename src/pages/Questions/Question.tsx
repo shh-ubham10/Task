@@ -278,7 +278,7 @@ const Question = () => {
 
           {/* options */}
           <p className="qp-opts-label">Type the options below</p>
-          {(["option1","option2","option3","option4"] as const).map((opt, i) => (
+          {(["option1","option2","option3","option4"] as const).map((opt) => (
             <div key={opt} className="qp-opt-row">
               <label className="qp-opt-radio">
                 <input type="radio" name="correct" checked={form.correct_option === opt} onChange={() => set("correct_option", opt)}/>
